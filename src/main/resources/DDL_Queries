@@ -1,0 +1,14 @@
+CREATE KEYSPACE essentials WITH REPLICATION ={'class':'SimpleStrategy','replication_factor':1};
+
+CREATE TABLE movies( movie_id UUID, title TEXT, release_year INT, PRIMARY KEY(movie_id));
+insert into movies(movie_id,title,release_year) values(uuid(),'Curious Case Of Benjamin Button',2011);
+
+CREATE TABLE movies_by_actor( actor TEXT, release_year INT, movie_id UUID, title TEXT, genres SET<TEXT>, rating float, PRIMARY KEY((actor),release_year,movie_id)) WITH CLUSTERING ORDER BY (release_year DESC,movie_id ASC);
+
+
+CREATE CUSTOM INDEX title ON movies_by_actor(title) USING 'org.apache.cassandra.index.sasi.SASIIndex' WITH OPTIONS = {'mode':'CONTAINS'};
+
+CREATE MATERIALIZED VIEW movies_mv AS  SELECT title, release_year,movie_id,genres,actor FROM movies_by_actor where title IS NOT NULL AND  release_year IS NOT NULL AND movie_id IS NOT NULL AND actor IS NOT NULL  PRIMARY KEY ((title,release_year),actor,movie_id);
+
+
+
